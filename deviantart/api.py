@@ -23,6 +23,8 @@ from .comment import Comment
 from .status import Status
 from .message import Message
 
+from time import sleep
+
 class DeviantartError(Exception):
 
     """Representing API Errors"""
@@ -1862,7 +1864,7 @@ class Api(object):
 
 
 
-    def _req(self, endpoint, get_data=dict(), post_data=dict()):
+    def _req(self, endpoint, get_data=dict(), post_data=dict(), wait=1):
 
         """Helper method to make API calls
 
@@ -1881,12 +1883,18 @@ class Api(object):
             response = self.oauth.request(request_parameter, data=encdata)
             self._checkResponseForErrors(response)
         except HTTPError as e:
+            print("HTTP ERROR: {}".format(e.code))
             # Try to use refresh token then retry the request once
+            if e.code == 429:
+                print("Waiting: {}".format(wait))
+                sleep(wait)
+                return self._req(endpoint, get_data, post_data, min(128, wait*1.5))
             if e.code == 401 and self.refresh_token is not None:
                 print("Got 401, trying refresh token")
                 self.auth(refresh_token=self.refresh_token)
-                response = self.oauth.request(request_parameter, data=encdata)
-                self._checkResponseForErrors(response)
+                #response = self.oauth.request(request_parameter, data=encdata)
+                #self._checkResponseForErrors(response)
+                return self._req(endpoint, get_data, post_data, wait)
             else:
                 raise DeviantartError(e)
 
