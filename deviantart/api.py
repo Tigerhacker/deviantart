@@ -517,7 +517,7 @@ class Api(object):
 
 
 
-    def download_deviation(self, deviationid):
+    def download_deviation(self, deviationid, return_raw=False):
 
         """Get the original file download (if allowed)
 
@@ -526,11 +526,15 @@ class Api(object):
 
         response = self._req('/deviation/download/{}'.format(deviationid))
 
+        if return_raw:
+            return response
+
         return {
             'src' : response['src'],
             'width' : response['width'],
             'height' : response['height'],
-            'filesize' : response['filesize']
+            'filesize' : response['filesize'],
+            'filename' : response.get('filename'),
         }
 
     def get_collections(self, username="", calculate_size=False, ext_preload=False, offset=0, limit=10):
